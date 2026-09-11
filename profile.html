@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container profile-header">
+  <div class="profile-avatar" {% if profile.avatar_url %}style="background-image: url('{{ url_for('static', filename=profile.avatar_url) }}'); background-size: cover; background-position: center;"{% endif %}></div>
+  <div class="profile-name">{{ profile.display_name if profile.show_real_name else profile.username }}</div>
+  <div class="profile-handle">@{{ profile.username }}</div>
+
+  {% if current_user and current_user.username == profile.username %}
+    <a href="{{ url_for('settings.profile_settings') }}" class="btn btn-ghost" style="margin-top: 16px; display: inline-block;">Edit profile</a>
+  {% endif %}
+
+  {% if relationship %}
+    <div class="profile-actions">
+      {% if relationship.connected %}
+        <a href="{{ url_for('messaging.thread', username=profile.username) }}" class="btn btn-gradient">Message</a>
+        <form method="post" action="{{ url_for('social.remove_connection', username=profile.username) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button type="submit" class="btn btn-ghost">Remove connection</button>
+        </form>
+      {% elif relationship.pending_incoming_id %}
+        <form method="post" action="{{ url_for('social.accept_connection_request', request_id=relationship.pending_incoming_id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button type="submit" class="btn btn-gradient">Accept connection request</button>
+        </form>
+      {% elif relationship.pending_outgoing %}
+        <button class="btn btn-ghost" disabled>Request sent</button>
+      {% else %}
+        <form method="post" action="{{ url_for('social.send_connection_request', username=profile.username) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button type="submit" class="btn btn-gradient">Connect</button>
+        </form>
+      {% endif %}
+
+      {% if relationship.following %}
+        <form method="post" action="{{ url_for('social.unfollow', username=profile.username) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button type="submit" class="btn btn-ghost">Following</button>
+        </form>
+      {% else %}
+        <form method="post" action="{{ url_for('social.follow', username=profile.username) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button type="submit" class="btn btn-ghost">Follow</button>
+        </form>
+      {% endif %}
+    </div>
+
+    {% if relationship.shared_interests %}
+      <div class="profile-section">
+        <h3>Common ground</h3>
+        <div class="tag-list">
+          {% for name in relationship.shared_interests %}
+            <span class="tag">{{ name }}</span>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+  {% endif %}
+
+  {% if profile.bio %}
+    <p class="profile-section" style="margin-top: 20px; max-width: 60ch;">{{ profile.bio }}</p>
+  {% endif %}
+
+  {% if profile.who_i_am %}
+    <div class="profile-section">
+      <h3>Who I am</h3>
+      <p>{{ profile.who_i_am }}</p>
+    </div>
+  {% endif %}
+
+  {% if profile.what_im_learning %}
+    <div class="profile-section">
+      <h3>What I'm learning</h3>
+      <p>{{ profile.what_im_learning }}</p>
+    </div>
+  {% endif %}
+
+  {% if profile.what_im_building %}
+    <div class="profile-section">
+      <h3>What I'm building</h3>
+      <p>{{ profile.what_im_building }}</p>
+    </div>
+  {% endif %}
+
+  {% if interests %}
+    <div class="profile-section">
+      <h3>Interests</h3>
+      <div class="tag-list">
+        {% for interest in interests %}
+          <span class="tag">{{ interest.name }}</span>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
